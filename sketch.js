@@ -1,39 +1,140 @@
-var phase, speed, maxCircleSize, numRows, numCols, numStrands, colorA, colorB;
+let fireworkId = 0
+
+const FireworkPhase = {
+  FUSING: 1,
+  ASCENDING : 2,
+  EXPLODING : 3
+}
+
+const WIDTH = 500
+const HEIGHT = 500
+const FRAME_RATE = 30
+const FRAME_TIME = 1.0 / FRAME_RATE
+const GRAVITY = -0.1 // negative pulls downwards
+
+const DEFAULT_FIREWORK_OPTS = {
+  speed: 9,
+  angle: 2 * Math.PI / 5
+}
+
+class Bang {
+  constructor(state) {
+    this.positionX = state.positionX
+    this.positionY = state.positionY
+    this.angle = state.angle
+    this.speed = 4.0
+    this.size = 4
+  }
+
+  animate() {
+    this.positionX += this.speed * Math.sin(this.angle)
+    this.positionY += this.speed * Math.cos(this.angle)
+  }
+}
+
+class Firework {
+  constructor(options) {
+    this.bangs = []
+    this.options = {
+      ...DEFAULT_FIREWORK_OPTS,
+      ...options
+    }
+    this.id = fireworkId
+    fireworkId += 1
+    this.velocity = {
+      x: this.options.speed * Math.cos(this.options.angle),
+      y: this.options.speed * Math.sin(this.options.angle)
+    }
+
+    this.size = 8
+    this.fuseTime = Math.random() * 3
+    this.flyTime = 3 + (Math.random() * 2)
+    this.bangTime = 0.5
+    this.timeInPhase = 0.0
+    this.phase = FireworkPhase.ASCENDING
+    this.startX = Math.random() * Math.floor(WIDTH / 4)
+    this.positionX = this.startX
+    this.positionY = HEIGHT 
+  }
+
+  animate() {
+    this.timeInPhase += FRAME_TIME
+    switch (this.phase) {
+      case FireworkPhase.FUSING:
+        if (this.timeInPhase > this.fuseTime) {
+          this.phase = FireworkPhase.ASCENDING
+        }
+        break
+      case FireworkPhase.ASCENDING:
+        this.positionX += this.velocity.x
+        this.positionY += this.velocity.y
+        if (
+            (this.positionY > HEIGHT) ||
+            (this.positionY < 0) ||
+            (this.timeInPhase > this.flyTime)
+        ) {
+          this.phase = FireworkPhase.EXPLODING
+          this.timeInPhase = 0.0
+          for (var x=0; x<6; x++) {
+            this.bangs.push(new Bang({
+              positionX: this.positionX,
+              positionY: this.positionY,
+              angle: x * (2 * Math.PI / 6)
+            }));
+          }
+        }
+        this.velocity.y += GRAVITY
+        break;
+      case FireworkPhase.EXPLODING:
+        if (this.timeInPhase > this.bangTime) {
+          this.positionX = this.startX
+          this.positionY = 0
+          this.velocity = {
+            x: this.options.speed * Math.cos(this.options.angle),
+            y: this.options.speed * Math.sin(this.options.angle)
+          }
+          this.phase = FireworkPhase.FUSING
+          this.bangs = []
+        }
+        break;
+    }
+  }
+}
+
+let fireworks = []
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(WIDTH, HEIGHT);
   noStroke();
-  
-  phase = 0;
-  speed = 0.03;
-  maxCircleSize = 20;
-  numRows = 10;
-  numCols = 16;
-  numStrands = 2;
-  
-  colorA = color(253, 174, 120);
-  colorB = color(226, 129, 161);
+  frameRate(FRAME_RATE)
+
+  for (var x=0; x < 10; x++) {
+    fireworks.push(new Firework())
+  }
 }
 
 function draw() {
-  background(4, 58, 74);
-  phase = frameCount * speed;
+  background('black') // clear the screen
   
-  for(var strand = 0; strand < numStrands; strand += 1) {
-    var strandPhase = phase + map(strand, 0, numStrands, 0, TWO_PI);
-    
-    for(var col = 0; col < numCols; col += 1) {
-      var colOffset = map(col, 0, numCols, 0, TWO_PI);
-      var x = map(col, 0, numCols, 50, width - 50);
-      
-      for(var row = 0; row < numRows; row += 1) {
-        var y = height/2 + row * 10 + sin(strandPhase + colOffset) * 50;
-        var sizeOffset = (cos(strandPhase - (row / numRows) + colOffset) + 1) * 0.5;
-        var circleSize = sizeOffset * maxCircleSize;
-        
-        fill(lerpColor(colorA, colorB, row / numRows));
-        ellipse(x, y, circleSize, circleSize);
-      }
-    }
-  }
+  // Send animate calls to everything
+  fireworks.forEach(f => {
+    f.animate()
+    f.bangs.forEach(b => {
+      b.animate()
+    })
+  })
+
+  fill('red');
+  fireworks.filter(f => f.phase === FireworkPhase.ASCENDING)
+    .forEach(firework => {
+      ellipse(firework.positionX, (HEIGHT - firework.positionY), firework.size);
+    })
+
+  fill('green');
+  fireworks.filter(f => f.phase === FireworkPhase.EXPLODING)
+    .forEach(firework => {
+      firework.bangs.forEach(bang => {
+        ellipse(bang.positionX, (HEIGHT - bang.positionY), bang.size);
+      })
+    })
 }
