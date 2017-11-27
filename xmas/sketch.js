@@ -20,7 +20,7 @@ let lastBaubleY = 0
 const MIN_BAUBLE_DISTANCE = 10.0
 
 function touchStarted() {
-  if (!!touches && (touches.length == 2)) {
+  if (!!touches && (touches.length == 3)) {
     rain.clearBaubles()
   }
 }
