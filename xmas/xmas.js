@@ -12,6 +12,8 @@ const DROP_X_JITTER = 0.2
 const MAX_SIZE = 10
 const MIN_SIZE = 4
 const BAUBLE_SIZE = 10
+const COLLISION_THRESHOLD = 10
+const BAUBLE_MARGIN = 5
 
 const COLOURS = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet']
 
@@ -45,17 +47,49 @@ class Drop {
     }
 }
 
+const BAUBLE_STATE = {
+    WAITING: 1,
+    ACTIVE: 2
+}
+
 class Bauble {
     constructor(x, y) {
         this.x = x
         this.y = y
         this.colour = 'grey'
         this.size = BAUBLE_SIZE
+        this.state = BAUBLE_STATE.WAITING
+    }
+
+    checkDrop(drop) {
+        if (this.state === BAUBLE_STATE.WAITING) {
+            var a = this.x - drop.x
+            var b = this.y - drop.y
+            
+            var c = Math.sqrt( a*a + b*b );
+
+            if (c < COLLISION_THRESHOLD) {
+                drop.finished = true
+                this.state = BAUBLE_STATE.ACTIVE
+                this.colour = drop.colour
+                this.size = drop.size
+            }
+        }
     }
 
     run(frameTime) {
-        fill(this.colour)
-        ellipse(this.x, this.y, this.size)
+        switch (this.state) {
+            case BAUBLE_STATE.WAITING: {
+                break;
+            }
+            case BAUBLE_STATE.ACTIVE: {
+                fill('white')
+                ellipse(this.x, this.y, (this.size + BAUBLE_MARGIN))
+                fill(this.colour)
+                ellipse(this.x, this.y, this.size)
+                break;
+            }
+        }
     }
 }
 
@@ -86,6 +120,10 @@ class Rain {
         this.baubles.push(bauble)
     }
 
+    clearBaubles() {
+        this.baubles = []
+    }
+
     run() {
         this.frameTime += FRAME_TIME
 
@@ -105,8 +143,13 @@ class Rain {
         }
 
         // Now run all the drops and baubles
+        this.drops.forEach(d => {
+            d.run(this.frameTime)
+            this.baubles.forEach(b => {
+                b.checkDrop(d)
+            })
+        })
         this.drops = this.drops.filter(d => !d.finished);
-        this.drops.forEach(d => d.run(this.frameTime))
         this.baubles.forEach(b => b.run(this.frameTime))
     }
 }

@@ -19,13 +19,24 @@ let lastBaubleX = 0
 let lastBaubleY = 0
 const MIN_BAUBLE_DISTANCE = 10.0
 
-function mouseDragged() {
+function touchStarted() {
+  if (!!touches && (touches.length == 2)) {
+    rain.clearBaubles()
+  }
+}
+function keyPressed() {
+  if (keyCode === RETURN) {
+    rain.clearBaubles()
+  } 
+}
+
+function touchMoved() {
     var a = lastBaubleX - mouseX
     var b = lastBaubleY - mouseY
     
     var c = Math.sqrt( a*a + b*b );
     if (c > MIN_BAUBLE_DISTANCE) {
-        rain.addBauble(new CaptureBauble(mouseX,mouseY));
+        rain.addBauble(new Bauble(mouseX,mouseY));
         lastBaubleX = mouseX
         lastBaubleY = mouseY
     }
