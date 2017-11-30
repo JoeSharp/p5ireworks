@@ -1,4 +1,4 @@
-let rain = []
+let rain = undefined
 
 function setup() {
   createCanvas(WIDTH, HEIGHT);
