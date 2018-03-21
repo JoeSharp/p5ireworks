@@ -1,65 +1,55 @@
-let cols, rows;
-let scale = 5;
-let w = 1000;
-let h = 1000;
-var fr = 30; //starting FPS
-let noiseScale = 0.05;
-let flying = 0;
-
-let hueValue = 0
+const WIDTH = 1000
+const HEIGHT = 500
+const FRAME_RATE = 30
+const FRAME_TIME = 1.0 / FRAME_RATE
+const TEXT_SIZE = 32
 let colours
-let colourSpeed = 10
-
-let terrain = []
+let rainbowBoard;
+let scaleX
+let scaleY
 
 function setup() {
-  createCanvas(w, h, WEBGL);
-  cols = w / scale;
-  rows = h / scale;
-  frameRate(fr); // Attempt to refresh at starting FPS
+  createCanvas(WIDTH, HEIGHT);
+  frameRate(FRAME_RATE); // Attempt to refresh at starting FPS
 
-  colours = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'].map(x => color(x))
+  colours = ['grey', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet'].map(x => color(x))
+
+  rainbowBoard = new RainbowBoard(colours.length);
+
+  scaleX = WIDTH / rainbowBoard.cols
+  scaleY = HEIGHT / rainbowBoard.rows
+
+  textSize(TEXT_SIZE)
+  textFont('Georgia');
 }
 
 function draw() {
   background('skyblue')
-  stroke('black')
-  noStroke()
-  noFill()
-  rotateX(PI / 3)
-  flying -= 0.05
+  stroke('grey')
+  
+  rainbowBoard.animate(FRAME_TIME);
 
-  let xOff = 0;
-  for (let x=0; x < cols; x++) {
-    let yOff = flying;
-    terrain[x] = []
-    for (let y=0; y < rows; y++) {
-      terrain[x][y] = map(noise(xOff, yOff), 0, 1, -50, 100)
-      yOff += noiseScale
-    }
-    xOff += noiseScale
-  }
-  let colourIndex = 0
-  let colourSpeedIndex = 0
-  translate(-w/2, -h/2)
-  for (let y=0; y < rows-1; y++) {
-    beginShape(TRIANGLE_STRIP);
+  rainbowBoard.tiles
+    .filter(tile => tile.state > 0)
+    .forEach(tile => {
+      fill(colours[tile.state])
+      rect(tile.x * scaleX, tile.y * scaleY, scaleX, scaleY)
+    })
 
-    let from = colours[colourIndex]
-    let to = colours[(colourIndex + 1) % colours.length]
-    fill(lerpColor(from, to, colourSpeedIndex / colourSpeed))
+  text('Happy Birthday Kate!', 10, HEIGHT - (3 * TEXT_SIZE))
+  text('Lots of Love, Joe, Tom and Indigo xxxx', 10, HEIGHT - TEXT_SIZE)
+}
 
-    if (colourSpeedIndex > colourSpeed) {
-      colourIndex += 1
-      colourIndex %= colours.length
-      colourSpeedIndex = 0
-    } else {
-      colourSpeedIndex += 1
-    }
-    for (let x=0; x < cols; x++) {
-      vertex(x * scale, y * scale, terrain[x][y]);
-      vertex(x * scale, (y+1) * scale, terrain[x][y+1]);
-    }
-    endShape();
-  }
+function mousePressed() {
+  rainbowBoard.addWave(mouseX / scaleX, mouseY / scaleY)
+  // prevent default
+  return false;
+}
+
+function touchStarted() {
+  waveX = Math.floor(mouseX / scaleX)
+  waveY = Math.floor(mouseY / scaleY)
+  rainbowBoard.addWave(waveX, waveY)
+  // prevent default
+  return false;
 }
