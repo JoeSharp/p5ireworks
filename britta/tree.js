@@ -6,13 +6,13 @@ let branchId = 0
 class BranchBuilder {
     constructor(parentBranch) {
         this.parentBranch = parentBranch;
-        this.length = 100;
+        this.intendedLength = 100;
         this.direction = 0;
         this.thickness = 20;
     }
 
     withLength(l) {
-        this.length = l;
+        this.intendedLength = l;
         return this;
     }
 
@@ -31,9 +31,9 @@ class BranchBuilder {
     }
 }
 
-function rootBranch(begin) {
-    return new BranchBuilder({
-        depth: 0,
+function rootBranch(begin, depth) {
+    return branchFrom({
+        depth : depth,
         end: begin
     })
 }
@@ -49,19 +49,20 @@ class Branch {
         this.branchId = branchId
         branchId += 1
         this.parentBranch = builder.parentBranch
-        this.depth = builder.parentBranch.depth + 1
+        this.depth = builder.parentBranch.depth - 1
         let random = map(Math.random(), 0, 1, 0.7, 1.4)
-        this.length = builder.length * random
+        this.intendedLength = builder.intendedLength * random
+        this.length = 0
         this.direction = builder.direction
         this.originalDirection = builder.direction
         this.thickness = builder.thickness
         this.branches = []
 
-        if (this.depth < 10) {
+        if (this.depth > 0) {
             let newDirection = this.direction - ANGLE_SPREAD
             for (let x=0; x<2; x++) {
                 this.branches.push(branchFrom(this)
-                        .withLength(this.length * LENGTH_REDUCTION)
+                        .withLength(this.intendedLength * LENGTH_REDUCTION)
                         .withDirection(newDirection)
                         .withThickness(this.thickness * THICKNESS_REDUCTION)
                         .build())
@@ -76,13 +77,19 @@ class Branch {
         end.rotate(this.direction)
         this.end = p5.Vector.sub(this.parentBranch.end, end)
 
-        branchConsumer(this)
-        this.branches.forEach(branch => { 
-            branch.iterateBranches(branchConsumer)
-        })
+        const iterateChildren = branchConsumer(this)
+
+        if (iterateChildren) {
+            this.branches.forEach(branch => { 
+                branch.iterateBranches(branchConsumer)
+            })
+        }
     }
 
     resetGrowth() {
-
+        this.iterateBranches(b => {
+            b.length = 0;
+            return true;
+        })
     }
 }
