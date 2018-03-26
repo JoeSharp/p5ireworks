@@ -16,8 +16,8 @@ function draw() {
   background('black')
   noStroke()
   
-  rotateX(2 * sin(cameraX))
-  rotateY(1 * cos(cameraY))
+  rotateX(5 * sin(cameraX))
+  rotateY(4 * cos(cameraY))
  
   const sphere = []
 
@@ -33,12 +33,11 @@ function draw() {
       const z = RADIUS * cos(latitude);
 
       const rawPoint = createVector(x, y, z);
-      const noiseValue = map(noise(x+(10 * cameraX), y, z), 0, 1, -10, 10)
+      const noiseValue = map(noise(x+(4 * cameraX), y, z), 0, 1, 0, 1)
       const randomVector = createVector(noiseValue,noiseValue,noiseValue)
-      const point = p5.Vector.add(rawPoint, randomVector)
+      const point = p5.Vector.mult(rawPoint, noiseValue)
       
-      //console.log('Random?', randomVector);
-      
+    
       pointsAtLatitude.push({
         longitude,
         point
