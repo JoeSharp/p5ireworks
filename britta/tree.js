@@ -1,5 +1,5 @@
-const LENGTH_REDUCTION = 0.67
-const THICKNESS_REDUCTION = 0.67
+const LENGTH_REDUCTION = 0.67;
+const THICKNESS_REDUCTION = 0.7;
 
 let branchId = 0
 
@@ -13,6 +13,7 @@ class BranchBuilder {
 
     withLength(l) {
         this.intendedLength = l;
+        this.baseLength = l;
         return this;
     }
 
@@ -51,6 +52,7 @@ class Branch {
         this.parentBranch = builder.parentBranch
         this.depth = builder.parentBranch.depth - 1
         let random = map(Math.random(), 0, 1, 0.7, 1.4)
+        this.baseLength = builder.intendedLength
         this.intendedLength = builder.intendedLength * random
         this.length = 0
         this.direction = builder.direction
@@ -62,7 +64,7 @@ class Branch {
             let newDirection = this.direction - ANGLE_SPREAD
             for (let x=0; x<2; x++) {
                 this.branches.push(branchFrom(this)
-                        .withLength(this.intendedLength * LENGTH_REDUCTION)
+                        .withLength(this.baseLength * LENGTH_REDUCTION)
                         .withDirection(newDirection)
                         .withThickness(this.thickness * THICKNESS_REDUCTION)
                         .build())
@@ -89,6 +91,8 @@ class Branch {
     resetGrowth() {
         this.iterateBranches(b => {
             b.length = 0;
+            let random = map(Math.random(), 0, 1, 0.7, 1.4)
+            b.intendedLength = b.baseLength * random
             return true;
         })
     }

@@ -1,14 +1,17 @@
-const WIDTH = 500
-const HEIGHT = 500
-const BRANCH_INITIAL_LENGTH = 100
-const BRANCH_INITIAL_THICKNESS = 30
+
+const BRANCH_INITIAL_LENGTH = 90
+const BRANCH_INITIAL_THICKNESS = 50
 const BRANCH_DEPTH = 10
 const GROWTH_RATE = 1.5;
+const GRASS_HEIGHT = 60;
 const FRAME_RATE = 30
 const FRAME_TIME = 1 / FRAME_RATE
 const TEXT_SIZE = 32
 const TEXT_FONT = 'Helvetica'
+const NUMBER_CLOUDS = 3;
 
+let sun;
+let clouds = []
 let tree;
 let frameTime = 0;
 let colours;
@@ -19,15 +22,16 @@ let twigColour;
 let branchColours = []
 
 function setup() {
-  createCanvas(WIDTH, HEIGHT);
-  rootColour = color(random(255), random(255), random(255))
-  twigColour = color(random(255), random(255), random(255))
+  createCanvas(500, 500);
 
-  for (let x=0; x<BRANCH_DEPTH; x++) {
-    branchColours.push(lerpColor(twigColour, rootColour, x / BRANCH_DEPTH))
+  sun = new Sun(width, height);
+
+  for (let i=0; i<NUMBER_CLOUDS; i++) {
+    let cloud = new Cloud(width, height)
+    clouds.push(cloud);
   }
 
-  tree = rootBranch(createVector(WIDTH / 2, HEIGHT), BRANCH_DEPTH)
+  tree = rootBranch(createVector(width / 2, height), BRANCH_DEPTH)
     .withLength(BRANCH_INITIAL_LENGTH)
     .withDirection(0)
     .withThickness(BRANCH_INITIAL_THICKNESS)
@@ -35,13 +39,48 @@ function setup() {
     
   textSize(TEXT_SIZE)
   textFont(TEXT_FONT);
+  
+  resetTree();
 }
 
 let printed = false
 
 function draw() {
-  background('skyblue')
+
   
+  
+  // Draw Sun
+  push()
+  translate(width/2, height)
+  sun.animateFrame();
+
+  if (sun.dayTime) {
+    background('skyblue')
+  } else {
+    background('black')
+  }
+
+  fill('goldenrod')
+  ellipse(sun.x, sun.y, sun.radius)
+  pop()
+
+  // Draw grass
+  fill('darkgreen');
+  noStroke();
+  rect(0, height-GRASS_HEIGHT, width, height)
+
+  // Draw Clouds
+  clouds.forEach(c => {
+    c.animateFrame();
+    
+    let alpha = map(sin(c.colourPhase), 0, 1, 150, 200)
+    //console.log('alpha', alpha)
+    fill(40, 40, 40, 80)
+    ellipse(c.x, c.y, c.radius)
+    ellipse(c.x-(c.radius*1.3), c.y+(c.radius*0.3), c.radius*0.7)
+    ellipse(c.x+(c.radius*0.8), c.y+(c.radius*0.3), c.radius*0.8)
+  })
+
   colourIndex = 0;
 
   // Calculate a value of noise to use for the 'wind'
@@ -74,6 +113,8 @@ function draw() {
   frameTime += FRAME_TIME
   
   strokeWeight(1)
+  stroke('black')
+  fill('darkgreen')
   text('Thank you Britta!', 10, TEXT_SIZE)
   text('Love from Tom and the Sharps x', 10, 2.5 * TEXT_SIZE)
 }
