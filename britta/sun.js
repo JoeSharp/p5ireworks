@@ -18,8 +18,6 @@ class Sun {
         this.x = vector.x;
         this.y = vector.y;
 
-        console.log('Sun x,y ' + this.x + ', ' + this.y)
-
         if ((this.x > -(this.width/2)) && (this.x < (this.width/2)) && (this.y < 0)) {
             this.dayTime = true;
         } else {
