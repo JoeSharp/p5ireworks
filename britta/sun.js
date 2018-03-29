@@ -1,24 +1,26 @@
-class Sun {
+class SunAndMoon {
     constructor(width, height) {
         this.width = width;
         this.height = height;
         this.centreX = width/2;
         this.centreY = height;
-        this.radius = width / 4;
-        this.rotationRadius = height * 0.7;
-        this.phase = PI / 4;
+        this.radius = width / 8;
+        this.rotationRadius = width * 0.5;
+        this.phase = 0;
+        this.frequency = 0.4;
     }
 
-    animateFrame() {
-        this.phase += 0.01;
+    animateFrame(time) {
+        this.phase = this.frequency * time;
 
-        let vector = createVector(0, this.rotationRadius)
-        vector.rotate(this.phase)
+        let sunVector = createVector(this.rotationRadius, 0)
 
-        this.x = vector.x;
-        this.y = vector.y;
+        sunVector.rotate(this.phase)
 
-        if ((this.x > -(this.width/2)) && (this.x < (this.width/2)) && (this.y < 0)) {
+        this.sun = sunVector;
+        this.moon = sunVector.copy().rotate(PI);
+
+        if (this.sun.heading() < 0) {
             this.dayTime = true;
         } else {
             this.dayTime = false;

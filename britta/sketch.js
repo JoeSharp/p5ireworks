@@ -1,7 +1,7 @@
 
 const BRANCH_INITIAL_LENGTH = 90
 const BRANCH_INITIAL_THICKNESS = 50
-const BRANCH_DEPTH = 10
+const BRANCH_DEPTH = 9
 const GROWTH_RATE = 1.5;
 const GRASS_HEIGHT = 60;
 const FRAME_RATE = 30
@@ -10,7 +10,7 @@ const TEXT_SIZE = 32
 const TEXT_FONT = 'Helvetica'
 const NUMBER_CLOUDS = 3;
 
-let sun;
+let sunAndMoon;
 let clouds = []
 let tree;
 let frameTime = 0;
@@ -20,11 +20,12 @@ let colourIndex = 0;
 let rootColour;
 let twigColour;
 let branchColours = []
+let time = 0;
 
 function setup() {
   createCanvas(500, 500);
 
-  sun = new Sun(width, height);
+  sunAndMoon = new SunAndMoon(width, height);
 
   for (let i=0; i<NUMBER_CLOUDS; i++) {
     let cloud = new Cloud(width, height)
@@ -43,25 +44,24 @@ function setup() {
   resetTree();
 }
 
-let printed = false
-
 function draw() {
+  time += FRAME_TIME;
 
-  
-  
   // Draw Sun
   push()
   translate(width/2, height)
-  sun.animateFrame();
+  sunAndMoon.animateFrame(time);
 
-  if (sun.dayTime) {
+  if (sunAndMoon.dayTime) {
     background('skyblue')
   } else {
     background('black')
   }
 
   fill('goldenrod')
-  ellipse(sun.x, sun.y, sun.radius)
+  ellipse(sunAndMoon.sun.x, sunAndMoon.sun.y, sunAndMoon.radius)
+  fill('white')
+  ellipse(sunAndMoon.moon.x, sunAndMoon.moon.y, sunAndMoon.radius)
   pop()
 
   // Draw grass
@@ -112,9 +112,13 @@ function draw() {
 
   frameTime += FRAME_TIME
   
-  strokeWeight(1)
-  stroke('black')
-  fill('darkgreen')
+  noStroke()
+  if (sunAndMoon.dayTime) {
+    fill('black')
+  } else {
+    fill('white')
+  }
+
   text('Thank you Britta!', 10, TEXT_SIZE)
   text('Love from Tom and the Sharps x', 10, 2.5 * TEXT_SIZE)
 }
