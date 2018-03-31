@@ -8,24 +8,21 @@
 // One vehicle "seeks"
 // See: http://www.red3d.com/cwr/
 
-let vehicle;
+let vehicles = [];
 let food = [];
 let poison = [];
 
 function setup() {
   createCanvas(640, 360);
-  vehicle = new Vehicle(width / 2, height / 2);
 
   for (var i = 0; i < 10; i++) {
-    var x = random(width);
-    var y = random(height);
-    food.push(createVector(x, y));
+    vehicles.push(new Vehicle(random(width), random(height)));
   }
-
+  for (var i = 0; i < 50; i++) {
+    food.push(createVector(random(width), random(height)));
+  }
   for (var i = 0; i < 10; i++) {
-    var x = random(width);
-    var y = random(height);
-    poison.push(createVector(x, y));
+    poison.push(createVector(random(width), random(height)));
   }
 }
 
@@ -33,6 +30,10 @@ function draw() {
   background(51);
 
   noStroke();
+
+  if (random(1) < 0.05) {
+    food.push(createVector(random(width), random(height)));
+  }
 
   // Green Food
   fill(0, 255, 0);
@@ -46,11 +47,14 @@ function draw() {
     ellipse(p.x, p.y, 8);
   });
 
-  // Call the appropriate steering behaviors for our agents
-  vehicle.eat(food);
-  vehicle.eat(poison);
-  //vehicle.seek(target);
-  vehicle.update();
-  vehicle.display();
+  vehicles.forEach(v => {
+    // Call the appropriate steering behaviors for our agents
+    v.behaviours(food, poison);
 
+    //vehicle.seek(target);
+    v.update();
+    v.display();
+  });
+
+  vehicles = vehicles.filter(v => !v.isDead());
 }
