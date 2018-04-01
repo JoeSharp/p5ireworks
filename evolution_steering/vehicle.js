@@ -4,11 +4,21 @@
 
 // The "Vehicle" class
 
-const GOOD = 0;
-const BAD = 0;
+const GOOD_ATTRACTION = 0;
+const BAD_ATTRACTION = 1;
+const GOOD_PERCEPTION = 2;
+const BAD_PERCEPTION = 3;
+const MUTATION_RATE = 0.1;
+
+function adjustDna(thisDna, parentDna, index, range) {
+    thisDna[index] = parentDna[index];
+    if (random(1) < MUTATION_RATE) {
+        thisDna[index] += random(-range, range);
+    }
+}
 
 class Vehicle {
-    constructor(x, y) {
+    constructor(x, y, dna) {
         this.acceleration = createVector(0, 0);
         this.velocity = createVector(0, -2);
         this.position = createVector(x, y);
@@ -18,12 +28,23 @@ class Vehicle {
         this.health = 1;
 
         this.dna = [];
-        this.dna[GOOD] = random(-5, 5);
-        this.dna[BAD] = random(-5, 5);
+
+        if (dna === undefined) {
+            this.dna[GOOD_ATTRACTION] = random(-2, 2);
+            this.dna[BAD_ATTRACTION] = random(-2, 2);
+            this.dna[GOOD_PERCEPTION] = random(0, 100);
+            this.dna[BAD_PERCEPTION] = random(0, 100);
+        } else {
+            adjustDna(this.dna, dna, GOOD_ATTRACTION, 0.1);
+            adjustDna(this.dna, dna, BAD_ATTRACTION, 0.1);
+            adjustDna(this.dna, dna, GOOD_PERCEPTION, 10);
+            adjustDna(this.dna, dna, BAD_PERCEPTION, 10);
+        }
     }
 
     // Method to update location
     update() {
+        // Reduce the health (hunger)
         this.health -= 0.005;
 
         // Update velocity
@@ -42,36 +63,56 @@ class Vehicle {
 
     // Weighting the steering behaviours
     behaviours(good, bad) {
-        var steerG = this.eat(good, 0.3);
-        var steerB = this.eat(bad, -0.1);
+        this.eat(good, 0.3);
+        this.eat(bad, -0.75);
+        var steerG = this.seekList(good, this.dna[GOOD_PERCEPTION]);
+        var steerB = this.seekList(bad, this.dna[BAD_PERCEPTION]);
 
-        steerG.mult(this.dna[GOOD]);
-        steerB.mult(this.dna[BAD]);
+        steerG.mult(this.dna[GOOD_ATTRACTION]);
+        steerB.mult(this.dna[BAD_ATTRACTION]);
 
         this.applyForce(steerG);
         this.applyForce(steerB);
     }
 
-    eat(list, nutrition) {
+    seekList(list, perception) {
         var record = Infinity;
-        var closest = -1;
+        var closest = null;
         list.forEach((l, i) => {
             var d = dist(this.position.x, this.position.y, l.x, l.y);
-            if (d < record) {
+            if ((d < record) && (d < perception)) {
                 record = d;
-                closest = i;
+                closest = l;
+            }
+        })
+
+        if (closest !== null) {
+            return this.seek(closest);
+        }
+
+        return createVector();
+    }
+
+    eat(list, nutrition) {
+        var eaten = [];
+        list.forEach((l, i) => {
+            var d = dist(this.position.x, this.position.y, l.x, l.y);
+            if (d < this.maxspeed) {
+                eaten.push(i);
+                this.health += nutrition;
             }
         })
 
         // This is the moment of eating!
-        if (record < 5) {
-            list.splice(closest, 1);
-            this.health += nutrition;
-        } else if (closest > -1) {
-            return this.seek(list[closest]);
-        }
+        eaten.forEach(i => list.splice(i, 1));
+    }
 
-        return createVector();
+    clone() {
+        if (random(1) < 0.001) {
+            return new Vehicle(this.position.x+10, this.position.y+10, this.dna);
+        } else {
+            return null;
+        }
     }
 
     // A method that calculates a steering force towards a target
@@ -89,11 +130,36 @@ class Vehicle {
         return steer;
     }
 
+    boundaries() {
+        var desired = null;
+        var d = 25;
+
+        if (this.position.x < d) {
+            desired = createVector(this.maxspeed, this.velocity.y);
+        } else if (this.position.x > width - d) {
+            desired = createVector(-this.maxspeed, this.velocity.y);
+        }
+
+        if (this.position.y < d) {
+            desired = createVector(this.velocity.x, this.maxspeed);
+        } else if (this.position.y > height - d) {
+            desired = createVector(this.velocity.x, -this.maxspeed);
+        }
+
+        if (desired !== null) {
+            desired.normalize();
+            desired.mult(this.maxspeed);
+            var steer = p5.Vector.sub(desired, this.velocity);
+            steer.limit(this.maxforce);
+            this.applyForce(steer);
+        }
+    }
+
     isDead() {
         return (this.health < 0);
     }
 
-    display() {
+    display(includeDebug) {
         // Draw a triangle rotated in the direction of velocity
         var theta = this.velocity.heading() + PI / 2;
         fill(127);
@@ -103,11 +169,7 @@ class Vehicle {
         translate(this.position.x, this.position.y);
         rotate(theta);
 
-        stroke(0, 255, 0);
-        line(0, 0, 0, -this.dna[0] * 20);
-        stroke(255, 0, 0);
-        line(0, 0, 0, -this.dna[1] * 20);
-
+        // Fill in health
         var gr = color(0, 255, 0);
         var rd = color(255, 0, 0);
         var col = lerpColor(rd, gr, this.health);
@@ -119,6 +181,20 @@ class Vehicle {
         vertex(-this.r, this.r * 2);
         vertex(this.r, this.r * 2);
         endShape(CLOSE);
+
+        if (includeDebug) {
+            // Draw debug information
+            noFill();
+            strokeWeight(4)
+            stroke(0, 255, 0);
+            line(0, 0, 0, -this.dna[GOOD_ATTRACTION] * 20);
+            ellipse(0, 0, this.dna[GOOD_PERCEPTION] * 2);
+            
+            strokeWeight(2)
+            stroke(255, 0, 0);
+            line(0, 0, 0, -this.dna[BAD_ATTRACTION] * 20);
+            ellipse(0, 0, this.dna[BAD_PERCEPTION] * 2);
+        }
 
         pop();
     }
