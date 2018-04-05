@@ -54,7 +54,7 @@ AXIS.forEach(axis => {
     });
 });
 
-class CubeSide {
+class SidePanel {
     constructor(cubePosition, axis, fixedValue) {
         this.axis = axis;
         this.fixedValue = fixedValue;
@@ -86,13 +86,42 @@ class Cubelet {
     constructor(x, y, z) {
         this.solvedPosition = createVector(x, y, z);
         this.position = createVector(x, y, z);
-        this.sides = [];
+        this.sidePanels = [];
 
         AXIS.forEach(axis => {
             FIXED_VALUES.forEach(fixedValue => {
-                this.sides.push(new CubeSide(this.position, axis, fixedValue));
+                this.sidePanels.push(new SidePanel(this.position, axis, fixedValue));
             });
         });
+    }
+}
+
+function lerpVector(start, end, amount) {
+    let x = lerp(start.x, end.x, amount);
+    let y = lerp(start.y, end.y, amount);
+    let z = lerp(start.z, end.z, amount);
+    return createVector(x, y, z);
+}
+
+class RotateAnimation {
+    constructor(rotateBy, frames, target) {
+        this.frame = 0;
+        this.frames = frames;
+        this.rotateByStep = lerpVector(createVector(), rotateBy, 1 / this.frames);
+        this.target = target;
+    }
+
+    update() {
+        if (this.isDone()) {
+            return;
+        }
+        this.target(this.rotateByStep);
+
+        this.frame++;
+    }
+
+    isDone() {
+        return (this.frame > this.frames);
     }
 }
 
@@ -100,6 +129,8 @@ class RubiksCube {
     constructor() {
         this.cubelets = [];
         this.rotation = createVector();
+        this.sides = [];
+        this.animations = [];
 
         for (let x=-1; x<2; x++) {
             for (let y=-1; y<2; y++) {
@@ -110,7 +141,22 @@ class RubiksCube {
         }
     }
 
+    update() {
+        if (this.animations.length > 0) {
+            this.animations[0].update();
+            if (this.animations[0].isDone()) {
+                this.animations.splice(0, 1);
+            }
+        }
+    }
+
+    resetRotation() {
+        this.rotation = createVector();
+    }
+
     rotateCube(rotateBy) {
-        this.rotation.add(rotateBy);
+        this.animations.push(new RotateAnimation(rotateBy, 1, (r) => {
+            this.rotation.add(r);
+        }));
     }
 }

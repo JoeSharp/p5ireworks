@@ -1,13 +1,36 @@
 let rubiksCube;
-let axisFilter = -1;
-let cubeFilter = -1;
+
+let displayInfo = {
+    axisFilter : -1,
+    cubeFilter : -1,
+    sideHighlight : INTERNAL_SIDE,
+
+    reset() {
+        this.axisFilter = -1;
+        this.cubeFilter = -1;
+        this.sideHighlight = INTERNAL_SIDE;
+    },
+
+    incrementSideHighlight() {
+        this.sideHighlight++;
+        this.sideHighlight %= SIDES.length;
+    },
+
+    decrementSideHighlight() {
+        this.sideHighlight--;
+        if (this.sideHighlight < 0) {
+            this.sideHighlight = SIDES.length-1;
+        }
+    }
+}
+
 let time = 0.5;
 const TIME_SPEED = 0.02;
-const ROTATE_INCREMENT = Math.PI / 6;
+const ROTATE_INCREMENT = Math.PI / 8;
 
 const COLOURS = {};
 
-let checkCubeFilter = (c, ci) => ((cubeFilter === -1) || ((ci % 9) === cubeFilter))
+let checkCubeFilter = (c, ci) => ((displayInfo.cubeFilter === -1) || ((ci % 9) === displayInfo.cubeFilter))
 
 const BLOCK_SIZE = 50;
 
@@ -19,6 +42,7 @@ function setup() {
     strokeWeight(8);
 
     rubiksCube = new RubiksCube();
+    //rubiksCube.rotateCube(createVector(-ROTATE_INCREMENT, ROTATE_INCREMENT, 0));
     console.log('Rubiks Cube', rubiksCube);
 
     COLOURS[INTERNAL_SIDE] = color('black');
@@ -33,10 +57,17 @@ function setup() {
 function draw() {
     background(51);
 
+    // This is the user controlled rotation
     rotateX(rubiksCube.rotation.x);
     rotateY(rubiksCube.rotation.y);
     rotateZ(rubiksCube.rotation.z);
+
+    // I want it to spin around it's middle
+    translate(-BLOCK_SIZE/2,-BLOCK_SIZE/2,-BLOCK_SIZE/2)
+
     time += TIME_SPEED;
+
+    rubiksCube.update();
 
     rubiksCube.cubelets
         .forEach((c, ci) => {
@@ -48,7 +79,7 @@ function draw() {
                 c.position.z * BLOCK_SIZE
             );
 
-            c.sides.forEach((s, si) => {
+            c.sidePanels.forEach((s, si) => {
                 beginShape();
 
                 if (checkCubeFilter(c, ci)) {
@@ -67,21 +98,17 @@ function draw() {
 }
 
 function keyPressed() {
-    //console.log('Key', keyCode);
-
     if ((keyCode >= 49) && (keyCode <= 57)) { // 1-9
-        cubeFilter = keyCode - 49;
+        displayInfo.cubeFilter = keyCode - 49;
     } else if (keyCode === 88) { // x
-        axisFilter = X_AXIS;
-    } else if (keyCode === 89) { // x
-        axisFilter = Y_AXIS;
-    } else if (keyCode === 90) { // x
-        axisFilter = Z_AXIS;
+        displayInfo.axisFilter = X_AXIS;
+    } else if (keyCode === 89) { // y
+        displayInfo.axisFilter = Y_AXIS;
+    } else if (keyCode === 90) { // z
+        displayInfo.axisFilter = Z_AXIS;
     } else if (keyCode === 32) { // SPACE
-        cubeFilter = -1;
-        axisFilter = -1;
-        xRotate = ROTATE_INCREMENT;
-        yRotate = ROTATE_INCREMENT;
+        displayInfo.reset();
+        rubiksCube.resetRotation();
     } else if (keyCode === 38) { // Up
         rubiksCube.rotateCube(createVector(ROTATE_INCREMENT, 0, 0));
     } else if (keyCode === 40) { // Down
@@ -90,5 +117,12 @@ function keyPressed() {
         rubiksCube.rotateCube(createVector(0, -ROTATE_INCREMENT, 0));
     } else if (keyCode === 39) { // Left
         rubiksCube.rotateCube(createVector(0, ROTATE_INCREMENT, 0));
+    } else if (keyCode === 65) { // a
+        displayInfo.decrementSideHighlight();
+    } else if (keyCode === 83) { // s
+        displayInfo.incrementSideHighlight();
     }
+
+    console.log('Key', keyCode);
+    console.log('Display Info', displayInfo);
   }
