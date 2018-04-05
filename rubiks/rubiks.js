@@ -7,6 +7,10 @@ const AXIS = [
     Y_AXIS, 
     Z_AXIS
 ];
+const COORDINATE_GETTER = {}
+COORDINATE_GETTER[X_AXIS] = (p) => p.x;
+COORDINATE_GETTER[Y_AXIS] = (p) => p.y;
+COORDINATE_GETTER[Z_AXIS] = (p) => p.z;
 
 const BINARY_CODES = [
     [0, 0],
@@ -21,8 +25,17 @@ class NamedSide {
         this.fixedValue = fixedValue;
     }
 
-    isMatch(cubeSide) {
-        return ((cubeSide.axis === this.axis) && (cubeSide.fixedValue === this.fixedValue));
+    isMatch(cubePosition, cubeSide) {
+        if ((cubeSide.axis === this.axis) && (cubeSide.fixedValue === this.fixedValue)){
+            let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
+            if ((coordValue === -1) && (cubeSide.fixedValue === 0)) {
+                return true;
+            } else if ((coordValue === 1) && (cubeSide.fixedValue === 1)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
@@ -42,12 +55,12 @@ AXIS.forEach(axis => {
 });
 
 class CubeSide {
-    constructor(parentCubelet, axis, fixedValue) {
+    constructor(cubePosition, axis, fixedValue) {
         this.axis = axis;
         this.fixedValue = fixedValue;
         this.side = INTERNAL_SIDE;
         SIDES.forEach((s, si) => {
-            if (s.isMatch(this)) {
+            if (s.isMatch(cubePosition, this)) {
                 this.side = si;
             }
         });
@@ -71,14 +84,13 @@ class CubeSide {
 
 class Cubelet {
     constructor(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.solvedPosition = createVector(x, y, z);
+        this.position = createVector(x, y, z);
         this.sides = [];
 
         AXIS.forEach(axis => {
             FIXED_VALUES.forEach(fixedValue => {
-                this.sides.push(new CubeSide(this, axis, fixedValue));
+                this.sides.push(new CubeSide(this.position, axis, fixedValue));
             });
         });
     }
@@ -87,6 +99,7 @@ class Cubelet {
 class RubiksCube {
     constructor() {
         this.cubelets = [];
+        this.rotation = createVector();
 
         for (let x=-1; x<2; x++) {
             for (let y=-1; y<2; y++) {
@@ -95,5 +108,9 @@ class RubiksCube {
                 }
             }
         }
+    }
+
+    rotateCube(rotateBy) {
+        this.rotation.add(rotateBy);
     }
 }

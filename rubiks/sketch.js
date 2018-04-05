@@ -3,8 +3,6 @@ let axisFilter = -1;
 let cubeFilter = -1;
 let time = 0.5;
 const TIME_SPEED = 0.02;
-let xRotate = 0;
-let yRotate = 0;
 const ROTATE_INCREMENT = Math.PI / 6;
 
 const COLOURS = {};
@@ -21,8 +19,7 @@ function setup() {
     strokeWeight(8);
 
     rubiksCube = new RubiksCube();
-
-    rubiksCube.cubelets.forEach(c => console.log('Cubelet', c))
+    console.log('Rubiks Cube', rubiksCube);
 
     COLOURS[INTERNAL_SIDE] = color('black');
 
@@ -36,16 +33,20 @@ function setup() {
 function draw() {
     background(51);
 
-    rotateX(xRotate);
-    rotateY(yRotate);
-    //rotateZ(time);
+    rotateX(rubiksCube.rotation.x);
+    rotateY(rubiksCube.rotation.y);
+    rotateZ(rubiksCube.rotation.z);
     time += TIME_SPEED;
 
     rubiksCube.cubelets
         .forEach((c, ci) => {
             push();
 
-            translate(c.x * BLOCK_SIZE, c.y * BLOCK_SIZE, c.z * BLOCK_SIZE);
+            translate(
+                c.position.x * BLOCK_SIZE, 
+                c.position.y * BLOCK_SIZE, 
+                c.position.z * BLOCK_SIZE
+            );
 
             c.sides.forEach((s, si) => {
                 beginShape();
@@ -79,13 +80,15 @@ function keyPressed() {
     } else if (keyCode === 32) { // SPACE
         cubeFilter = -1;
         axisFilter = -1;
+        xRotate = ROTATE_INCREMENT;
+        yRotate = ROTATE_INCREMENT;
     } else if (keyCode === 38) { // Up
-        xRotate += ROTATE_INCREMENT;
+        rubiksCube.rotateCube(createVector(ROTATE_INCREMENT, 0, 0));
     } else if (keyCode === 40) { // Down
-        xRotate -= ROTATE_INCREMENT;
+        rubiksCube.rotateCube(createVector(-ROTATE_INCREMENT, 0, 0));
     } else if (keyCode === 37) { // Right
-        yRotate -= ROTATE_INCREMENT;
+        rubiksCube.rotateCube(createVector(0, -ROTATE_INCREMENT, 0));
     } else if (keyCode === 39) { // Left
-        yRotate += ROTATE_INCREMENT;
+        rubiksCube.rotateCube(createVector(0, ROTATE_INCREMENT, 0));
     }
   }
