@@ -77,6 +77,7 @@ function draw() {
     if (displayInfo.sideFilter > INTERNAL_SIDE) {
         stroke('pink');
         let v = getUnitVector(SIDES[displayInfo.sideFilter].axis);
+        v.mult(SIDES[displayInfo.sideFilter].fixedValue);
         line(0, 0, 0, v.x * BLOCK_SIZE_X_5, v.y * BLOCK_SIZE_X_5, v.z * BLOCK_SIZE_X_5);
     }
 
@@ -94,11 +95,16 @@ function draw() {
                 stroke('black');
             }
 
+            rotateX(c.rotation.x);
+            rotateY(c.rotation.y);
+            rotateZ(c.rotation.z);
+            
             translate(
-                c.position.x * HALF_BLOCK_SIZE * 2, 
-                c.position.y * HALF_BLOCK_SIZE * 2, 
-                c.position.z * HALF_BLOCK_SIZE * 2
+                c.solvedPosition.x * HALF_BLOCK_SIZE * 2, 
+                c.solvedPosition.y * HALF_BLOCK_SIZE * 2, 
+                c.solvedPosition.z * HALF_BLOCK_SIZE * 2
             );
+
 
             c.sidePanels.forEach((s, si) => {
                 beginShape();

@@ -98,6 +98,7 @@ class Cubelet {
     constructor(x, y, z) {
         this.solvedPosition = createVector(x, y, z);
         this.position = createVector(x, y, z);
+        this.rotation = createVector();
         this.sidePanels = [];
 
         AXIS.forEach(axis => {
@@ -172,6 +173,52 @@ class RubiksCube {
 
     rotateSide(side, direction) {
         console.log('Rotating Side ' + side + ' in direction ' + direction);
+
+        let namedSide = SIDES[side];
+
+        this.cubelets.filter(c => {
+            return this.sides[side].filter(sc => {
+                return (sc.x === c.position.x) && (sc.y === c.position.y) && (sc.z === c.position.z);
+            }).length > 0
+        }).forEach(c => {
+            console.log('Rotating Cube', c);
+            console.log('Around Side', namedSide);
+
+            let newPosition;
+            let newRotation;
+            switch(namedSide.axis) {
+                case X_AXIS: {
+                    newRotation = createVector(
+                        c.position.x, 
+                        c.position.z * direction, 
+                        c.position.y * direction);
+                    newPosition = createVector(
+                        c.position.x, 
+                        c.position.z * direction, 
+                        c.position.y * direction);
+                    break;
+                }
+                // case Y_AXIS: {
+                //     newPosition = createVector(
+                //         c.position.z * direction,
+                //         c.position.y, 
+                //         c.position.x * direction);
+                //     break;
+                // }
+                // case Z_AXIS: {
+                //     newPosition = createVector(
+                //         c.position.y * direction,
+                //         c.position.x * direction, 
+                //         c.position.z);
+                //     break;
+                // }
+            }
+
+            if (newPosition && newRotation) {
+                c.position = newPosition;
+                c.rotation = newRotation;
+            }
+        })
     }
 
     rotateCube(rotateBy) {
