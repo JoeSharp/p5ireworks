@@ -19,26 +19,6 @@ const BINARY_CODES = [
     [1, 0]
 ]
 
-class NamedSide {
-    constructor(axis, fixedValue) {
-        this.axis = axis;
-        this.fixedValue = fixedValue;
-    }
-
-    isMatch(cubePosition, cubeSide) {
-        if ((cubeSide.axis === this.axis) && (cubeSide.fixedValue === this.fixedValue)){
-            let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
-            if ((coordValue === -1) && (cubeSide.fixedValue === 0)) {
-                return true;
-            } else if ((coordValue === 1) && (cubeSide.fixedValue === 1)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-}
-
 const INTERNAL_SIDE = -1;
 const SIDES = [];
 const LOW_FIXED_VALUE = 0;
@@ -47,6 +27,37 @@ const FIXED_VALUES = [
     LOW_FIXED_VALUE,
     HIGH_FIXED_VALUE
 ];
+
+class NamedSide {
+    constructor(axis, fixedValue) {
+        this.axis = axis;
+        this.fixedValue = fixedValue;
+    }
+
+    isCubeletMatch(cubePosition) {
+        let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
+        if ((coordValue === -1) && (this.fixedValue === 0)) {
+            return true;
+        } else if ((coordValue === 1) && (this.fixedValue === 1)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    isPanelMatch(cubePosition, cubeSidePanel) {
+        if ((cubeSidePanel.axis === this.axis) && (cubeSidePanel.fixedValue === this.fixedValue)){
+            let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
+            if ((coordValue === -1) && (this.fixedValue === 0)) {
+                return true;
+            } else if ((coordValue === 1) && (this.fixedValue === 1)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
 
 AXIS.forEach(axis => {
     FIXED_VALUES.forEach(fixedValue => {
@@ -60,7 +71,7 @@ class SidePanel {
         this.fixedValue = fixedValue;
         this.side = INTERNAL_SIDE;
         SIDES.forEach((s, si) => {
-            if (s.isMatch(cubePosition, this)) {
+            if (s.isPanelMatch(cubePosition, this)) {
                 this.side = si;
             }
         });
@@ -129,7 +140,6 @@ class RubiksCube {
     constructor() {
         this.cubelets = [];
         this.rotation = createVector();
-        this.sides = [];
         this.animations = [];
 
         for (let x=-1; x<2; x++) {
@@ -139,6 +149,11 @@ class RubiksCube {
                 }
             }
         }
+        this.sides = SIDES.map(side => 
+            this.cubelets
+                .map(c => c.solvedPosition)
+                .filter(p => side.isCubeletMatch(p))
+        );
     }
 
     update() {
@@ -152,6 +167,10 @@ class RubiksCube {
 
     resetRotation() {
         this.rotation = createVector();
+    }
+
+    rotateSide(side, direction) {
+        console.log('Rotating Side ' + side + ' in direction ' + direction);
     }
 
     rotateCube(rotateBy) {

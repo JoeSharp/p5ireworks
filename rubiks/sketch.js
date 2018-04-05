@@ -21,6 +21,20 @@ let displayInfo = {
         if (this.sideHighlight < 0) {
             this.sideHighlight = SIDES.length-1;
         }
+    }, 
+    
+    checkCubeFilter(c, ci) {
+        return ((this.cubeFilter === -1) || ((ci % 9) === this.cubeFilter));
+    },
+
+    checkSideFilter(c, ci) {
+        if (this.sideHighlight > INTERNAL_SIDE) {
+            return rubiksCube.sides[this.sideHighlight].filter(sc => {
+                return (sc.x === c.position.x) && (sc.y === c.position.y) && (sc.z === c.position.z);
+            }).length > 0;
+        }
+
+        return false;
     }
 }
 
@@ -30,15 +44,12 @@ const ROTATE_INCREMENT = Math.PI / 8;
 
 const COLOURS = {};
 
-let checkCubeFilter = (c, ci) => ((displayInfo.cubeFilter === -1) || ((ci % 9) === displayInfo.cubeFilter))
-
 const BLOCK_SIZE = 50;
 
 function setup() {
     createCanvas(400, 400, WEBGL);
     colorMode(RGB);
 
-    stroke('black')
     strokeWeight(8);
 
     rubiksCube = new RubiksCube();
@@ -73,6 +84,12 @@ function draw() {
         .forEach((c, ci) => {
             push();
 
+            if (displayInfo.checkSideFilter(c, ci)) {
+                stroke('pink');
+            } else {
+                stroke('black');
+            }
+
             translate(
                 c.position.x * BLOCK_SIZE, 
                 c.position.y * BLOCK_SIZE, 
@@ -82,11 +99,12 @@ function draw() {
             c.sidePanels.forEach((s, si) => {
                 beginShape();
 
-                if (checkCubeFilter(c, ci)) {
+                if (displayInfo.checkCubeFilter(c, ci)) {
                     fill(COLOURS[s.side]);
                 } else {
                     noFill();
                 }
+
                 s.vertices.forEach((v, vi) => {
                     vertex(v.x * BLOCK_SIZE, v.y * BLOCK_SIZE, v.z * BLOCK_SIZE);
                 });
@@ -121,6 +139,18 @@ function keyPressed() {
         displayInfo.decrementSideHighlight();
     } else if (keyCode === 83) { // s
         displayInfo.incrementSideHighlight();
+    } else if (keyCode === 81) { // q
+        if (displayInfo.sideHighlight > INTERNAL_SIDE) {
+            rubiksCube.rotateSide(displayInfo.sideHighlight, 0);
+        } else {
+            console.log('Please select a side first (a, s)');
+        }
+    } else if (keyCode === 69) { // e
+        if (displayInfo.sideHighlight > INTERNAL_SIDE) {
+            rubiksCube.rotateSide(displayInfo.sideHighlight, 1);
+        } else {
+            console.log('Please select a side first (a, s)');
+        }
     }
 
     console.log('Key', keyCode);
