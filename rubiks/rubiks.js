@@ -8,23 +8,6 @@ const AXIS = [
     Z_AXIS
 ];
 
-const INTERNAL_SIDE = -1;
-const LEFT_SIDE = 0;
-const RIGHT_SIDE = 1;
-const TOP_SIDE = 2;
-const BOTTOM_SIDE = 3;
-const NEAR_SIDE = 4;
-const FAR_SIDE = 5;
-const SIDES = [
-    INTERNAL_SIDE,
-    LEFT_SIDE,
-    RIGHT_SIDE,
-    TOP_SIDE,
-    BOTTOM_SIDE,
-    NEAR_SIDE,
-    FAR_SIDE
-]
-
 const BINARY_CODES = [
     [0, 0],
     [0, 1],
@@ -32,41 +15,42 @@ const BINARY_CODES = [
     [1, 0]
 ]
 
+class NamedSide {
+    constructor(axis, fixedValue) {
+        this.axis = axis;
+        this.fixedValue = fixedValue;
+    }
+
+    isMatch(cubeSide) {
+        return ((cubeSide.axis === this.axis) && (cubeSide.fixedValue === this.fixedValue));
+    }
+}
+
+const INTERNAL_SIDE = -1;
+const SIDES = [];
+const LOW_FIXED_VALUE = 0;
+const HIGH_FIXED_VALUE = 1;
+const FIXED_VALUES = [
+    LOW_FIXED_VALUE,
+    HIGH_FIXED_VALUE
+];
+
+AXIS.forEach(axis => {
+    FIXED_VALUES.forEach(fixedValue => {
+        SIDES.push(new NamedSide(axis, fixedValue));
+    });
+});
+
 class CubeSide {
     constructor(parentCubelet, axis, fixedValue) {
         this.axis = axis;
         this.fixedValue = fixedValue;
         this.side = INTERNAL_SIDE;
-        if ((parentCubelet.x === -1) && (axis === X_AXIS)) {
-            if (fixedValue === 0) {
-                this.side = LEFT_SIDE;
+        SIDES.forEach((s, si) => {
+            if (s.isMatch(this)) {
+                this.side = si;
             }
-        }
-        else if ((parentCubelet.x === 1) && (axis === X_AXIS)) {
-            if (fixedValue === 1) {
-                this.side = RIGHT_SIDE;
-            }
-        }
-        else if ((parentCubelet.y === -1) && (axis === Y_AXIS)) {
-            if (fixedValue === 0) {
-                this.side = BOTTOM_SIDE;
-            }
-        }
-        else if ((parentCubelet.y === 1) && (axis === Y_AXIS)) {
-            if (fixedValue === 1) {
-                this.side = TOP_SIDE;
-            }
-        }
-        else if ((parentCubelet.z === -1) && (axis === Z_AXIS)) {
-            if (fixedValue === 0) {
-                this.side = NEAR_SIDE;
-            }
-        }
-        else if ((parentCubelet.z === 1) && (axis === Z_AXIS)) {
-            if (fixedValue === 1) {
-                this.side = FAR_SIDE;
-            }
-        }
+        });
 
         switch (axis) {
             case X_AXIS:
@@ -93,9 +77,9 @@ class Cubelet {
         this.sides = [];
 
         AXIS.forEach(axis => {
-            for (let fixedValue=0; fixedValue<2; fixedValue++) {
+            FIXED_VALUES.forEach(fixedValue => {
                 this.sides.push(new CubeSide(this, axis, fixedValue));
-            }
+            });
         });
     }
 }

@@ -3,6 +3,9 @@ let axisFilter = -1;
 let cubeFilter = -1;
 let time = 0.5;
 const TIME_SPEED = 0.02;
+let xRotate = 0;
+let yRotate = 0;
+const ROTATE_INCREMENT = Math.PI / 6;
 
 const COLOURS = {};
 
@@ -22,20 +25,20 @@ function setup() {
     rubiksCube.cubelets.forEach(c => console.log('Cubelet', c))
 
     COLOURS[INTERNAL_SIDE] = color('black');
-    COLOURS[LEFT_SIDE] = color('white');
-    COLOURS[RIGHT_SIDE] = color('yellow');
-    COLOURS[TOP_SIDE] = color('green');
-    COLOURS[BOTTOM_SIDE] = color('blue');
-    COLOURS[NEAR_SIDE] = color('orange');
-    COLOURS[FAR_SIDE] = color('red');
+
+    let colourValues = ['white', 'yellow', 'green', 'blue', 'orange', 'red'];
+    let colourIndex = 0;
+    SIDES.forEach((s, si) => {
+        COLOURS[si] = colourValues[colourIndex++];
+    });
 }
 
 function draw() {
     background(51);
 
-    rotateX(time);
-    rotateY(time);
-    rotateZ(time);
+    rotateX(xRotate);
+    rotateY(yRotate);
+    //rotateZ(time);
     time += TIME_SPEED;
 
     rubiksCube.cubelets
@@ -63,6 +66,8 @@ function draw() {
 }
 
 function keyPressed() {
+    //console.log('Key', keyCode);
+
     if ((keyCode >= 49) && (keyCode <= 57)) { // 1-9
         cubeFilter = keyCode - 49;
     } else if (keyCode === 88) { // x
@@ -74,5 +79,13 @@ function keyPressed() {
     } else if (keyCode === 32) { // SPACE
         cubeFilter = -1;
         axisFilter = -1;
+    } else if (keyCode === 38) { // Up
+        xRotate += ROTATE_INCREMENT;
+    } else if (keyCode === 40) { // Down
+        xRotate -= ROTATE_INCREMENT;
+    } else if (keyCode === 37) { // Right
+        yRotate -= ROTATE_INCREMENT;
+    } else if (keyCode === 39) { // Left
+        yRotate += ROTATE_INCREMENT;
     }
   }
