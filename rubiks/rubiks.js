@@ -7,26 +7,38 @@ const AXIS = [
     Y_AXIS, 
     Z_AXIS
 ];
-const COORDINATE_GETTER = {}
-COORDINATE_GETTER[X_AXIS] = (p) => p.x;
-COORDINATE_GETTER[Y_AXIS] = (p) => p.y;
-COORDINATE_GETTER[Z_AXIS] = (p) => p.z;
 
-const BINARY_CODES = [
-    [0, 0],
-    [0, 1],
-    [1, 1],
-    [1, 0]
-]
+function getCoordinate(axis, vector) {
+    switch (axis) {
+        case X_AXIS: return vector.x;
+        case Y_AXIS: return vector.y;
+        case Z_AXIS: return vector.z;
+    }
+}
+
+function getUnitVector(axis) {
+    switch (axis) {
+        case X_AXIS: return createVector(1, 0, 0);
+        case Y_AXIS: return createVector(0, 1, 0);
+        case Z_AXIS: return createVector(0, 0, 1);
+    }
+}
 
 const INTERNAL_SIDE = -1;
 const SIDES = [];
-const LOW_FIXED_VALUE = 0;
+const LOW_FIXED_VALUE = -1;
 const HIGH_FIXED_VALUE = 1;
 const FIXED_VALUES = [
     LOW_FIXED_VALUE,
     HIGH_FIXED_VALUE
 ];
+
+const BINARY_CODES = [
+    [LOW_FIXED_VALUE, LOW_FIXED_VALUE],
+    [LOW_FIXED_VALUE, HIGH_FIXED_VALUE],
+    [HIGH_FIXED_VALUE, HIGH_FIXED_VALUE],
+    [HIGH_FIXED_VALUE, LOW_FIXED_VALUE]
+]
 
 class NamedSide {
     constructor(axis, fixedValue) {
@@ -35,24 +47,13 @@ class NamedSide {
     }
 
     isCubeletMatch(cubePosition) {
-        let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
-        if ((coordValue === -1) && (this.fixedValue === 0)) {
-            return true;
-        } else if ((coordValue === 1) && (this.fixedValue === 1)) {
-            return true;
-        }
-
-        return false;
+        let coordValue = getCoordinate(this.axis, cubePosition);
+        return (coordValue === this.fixedValue);
     }
 
     isPanelMatch(cubePosition, cubeSidePanel) {
         if ((cubeSidePanel.axis === this.axis) && (cubeSidePanel.fixedValue === this.fixedValue)){
-            let coordValue = COORDINATE_GETTER[this.axis](cubePosition);
-            if ((coordValue === -1) && (this.fixedValue === 0)) {
-                return true;
-            } else if ((coordValue === 1) && (this.fixedValue === 1)) {
-                return true;
-            }
+            return this.isCubeletMatch(cubePosition);
         }
 
         return false;
@@ -142,9 +143,9 @@ class RubiksCube {
         this.rotation = createVector();
         this.animations = [];
 
-        for (let x=-1; x<2; x++) {
-            for (let y=-1; y<2; y++) {
-                for (let z=-1; z<2; z++) {
+        for (let x=LOW_FIXED_VALUE; x<=HIGH_FIXED_VALUE; x++) {
+            for (let y=LOW_FIXED_VALUE; y<=HIGH_FIXED_VALUE; y++) {
+                for (let z=LOW_FIXED_VALUE; z<=HIGH_FIXED_VALUE; z++) {
                     this.cubelets.push(new Cubelet(x, y, z));
                 }
             }

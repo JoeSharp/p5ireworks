@@ -3,23 +3,23 @@ let rubiksCube;
 let displayInfo = {
     axisFilter : -1,
     cubeFilter : -1,
-    sideHighlight : INTERNAL_SIDE,
+    sideFilter : INTERNAL_SIDE,
 
     reset() {
         this.axisFilter = -1;
         this.cubeFilter = -1;
-        this.sideHighlight = INTERNAL_SIDE;
+        this.sideFilter = INTERNAL_SIDE;
     },
 
-    incrementSideHighlight() {
-        this.sideHighlight++;
-        this.sideHighlight %= SIDES.length;
+    incrementsideFilter() {
+        this.sideFilter++;
+        this.sideFilter %= SIDES.length;
     },
 
-    decrementSideHighlight() {
-        this.sideHighlight--;
-        if (this.sideHighlight < 0) {
-            this.sideHighlight = SIDES.length-1;
+    decrementsideFilter() {
+        this.sideFilter--;
+        if (this.sideFilter < 0) {
+            this.sideFilter = SIDES.length-1;
         }
     }, 
     
@@ -28,8 +28,8 @@ let displayInfo = {
     },
 
     checkSideFilter(c, ci) {
-        if (this.sideHighlight > INTERNAL_SIDE) {
-            return rubiksCube.sides[this.sideHighlight].filter(sc => {
+        if (this.sideFilter > INTERNAL_SIDE) {
+            return rubiksCube.sides[this.sideFilter].filter(sc => {
                 return (sc.x === c.position.x) && (sc.y === c.position.y) && (sc.z === c.position.z);
             }).length > 0;
         }
@@ -44,13 +44,14 @@ const ROTATE_INCREMENT = Math.PI / 8;
 
 const COLOURS = {};
 
-const BLOCK_SIZE = 50;
+const HALF_BLOCK_SIZE = 20;
+const BLOCK_SIZE_X_5 = HALF_BLOCK_SIZE * 10;
 
 function setup() {
     createCanvas(400, 400, WEBGL);
     colorMode(RGB);
 
-    strokeWeight(8);
+    strokeWeight(4);
 
     rubiksCube = new RubiksCube();
     //rubiksCube.rotateCube(createVector(-ROTATE_INCREMENT, ROTATE_INCREMENT, 0));
@@ -73,8 +74,11 @@ function draw() {
     rotateY(rubiksCube.rotation.y);
     rotateZ(rubiksCube.rotation.z);
 
-    // I want it to spin around it's middle
-    translate(-BLOCK_SIZE/2,-BLOCK_SIZE/2,-BLOCK_SIZE/2)
+    if (displayInfo.sideFilter > INTERNAL_SIDE) {
+        stroke('pink');
+        let v = getUnitVector(SIDES[displayInfo.sideFilter].axis);
+        line(0, 0, 0, v.x * BLOCK_SIZE_X_5, v.y * BLOCK_SIZE_X_5, v.z * BLOCK_SIZE_X_5);
+    }
 
     time += TIME_SPEED;
 
@@ -91,9 +95,9 @@ function draw() {
             }
 
             translate(
-                c.position.x * BLOCK_SIZE, 
-                c.position.y * BLOCK_SIZE, 
-                c.position.z * BLOCK_SIZE
+                c.position.x * HALF_BLOCK_SIZE * 2, 
+                c.position.y * HALF_BLOCK_SIZE * 2, 
+                c.position.z * HALF_BLOCK_SIZE * 2
             );
 
             c.sidePanels.forEach((s, si) => {
@@ -106,7 +110,7 @@ function draw() {
                 }
 
                 s.vertices.forEach((v, vi) => {
-                    vertex(v.x * BLOCK_SIZE, v.y * BLOCK_SIZE, v.z * BLOCK_SIZE);
+                    vertex(v.x * HALF_BLOCK_SIZE, v.y * HALF_BLOCK_SIZE, v.z * HALF_BLOCK_SIZE);
                 });
                 endShape(CLOSE);
             });
@@ -136,23 +140,23 @@ function keyPressed() {
     } else if (keyCode === 39) { // Left
         rubiksCube.rotateCube(createVector(0, ROTATE_INCREMENT, 0));
     } else if (keyCode === 65) { // a
-        displayInfo.decrementSideHighlight();
+        displayInfo.decrementsideFilter();
     } else if (keyCode === 83) { // s
-        displayInfo.incrementSideHighlight();
+        displayInfo.incrementsideFilter();
     } else if (keyCode === 81) { // q
-        if (displayInfo.sideHighlight > INTERNAL_SIDE) {
-            rubiksCube.rotateSide(displayInfo.sideHighlight, 0);
+        if (displayInfo.sideFilter > INTERNAL_SIDE) {
+            rubiksCube.rotateSide(displayInfo.sideFilter, 0);
         } else {
             console.log('Please select a side first (a, s)');
         }
     } else if (keyCode === 69) { // e
-        if (displayInfo.sideHighlight > INTERNAL_SIDE) {
-            rubiksCube.rotateSide(displayInfo.sideHighlight, 1);
+        if (displayInfo.sideFilter > INTERNAL_SIDE) {
+            rubiksCube.rotateSide(displayInfo.sideFilter, 1);
         } else {
             console.log('Please select a side first (a, s)');
         }
     }
 
-    console.log('Key', keyCode);
-    console.log('Display Info', displayInfo);
+    //console.log('Key', keyCode);
+    //console.log('Display Info', displayInfo);
   }
